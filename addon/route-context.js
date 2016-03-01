@@ -16,7 +16,9 @@ class Controller {
 
 export default Ember.Route.extend({
   updateModel(model) {
-    this.state = new Controller({ model, target: this });
+    Ember.propertyWillChange(this.state, 'model');
+    Ember.set(this.state, 'model', model);
+    Ember.propertyDidChange(this.state, 'model');
   },
 
   /*
@@ -51,10 +53,8 @@ export default Ember.Route.extend({
 
     var renderOptions = buildRenderOptions(this, namePassed, isDefaultRender, name, options);
 
-    /*
-     * Here is where we add the custom object proxy
-     */
     renderOptions.controller = this.state;
+
     this.connections.push(renderOptions);
     run.once(this.router, '_setOutlets');
   },
