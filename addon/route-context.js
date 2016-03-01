@@ -9,10 +9,6 @@ class Controller {
     this.target = args.target;
   }
 
-  unknownProperty(key) {
-    return Ember.get(this.model, key);
-  }
-
   send() {
     this.target.send(...arguments);
   }
