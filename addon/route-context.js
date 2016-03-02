@@ -16,9 +16,7 @@ class Controller {
 
 export default Ember.Route.extend({
   updateModel(model) {
-    Ember.propertyWillChange(this.state, 'model');
     Ember.set(this.state, 'model', model);
-    Ember.propertyDidChange(this.state, 'model');
   },
 
   /*
