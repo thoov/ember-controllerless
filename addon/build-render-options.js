@@ -1,16 +1,30 @@
 import Ember from 'ember';
 
-const { assert, get, getOwner, run } = Ember;
+const { assert, getOwner } = Ember;
+
+function handlerInfoFor(route, handlerInfos, _offset) {
+  if (!handlerInfos) { return; }
+
+  var offset = _offset || 0;
+  var current;
+  for (var i = 0, l = handlerInfos.length; i < l; i++) {
+    current = handlerInfos[i].handler;
+    if (current === route) { return handlerInfos[i + offset]; }
+  }
+}
+
+function parentRoute(route) {
+  var handlerInfo = handlerInfoFor(route, route.router.router.state.handlerInfos, -1);
+  return handlerInfo && handlerInfo.handler;
+}
 
 /*
 * https://github.com/emberjs/ember.js/blob/7587a7d1f9fd94fd20debad0c7477d1d051b35e2/packages/ember-routing/lib/system/route.js#L2095-L2178
 */
 export default function buildRenderOptions(route, namePassed, isDefaultRender, name, options) {
   var templateName;
-  var viewName;
-  var ViewClass;
   var template;
-  var into = options && options.into
+  var into = options && options.into;
   var outlet = (options && options.outlet) || 'main';
 
   if (name) {

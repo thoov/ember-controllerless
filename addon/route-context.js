@@ -1,7 +1,7 @@
 import Ember from 'ember';
 import buildRenderOptions from './build-render-options';
 
-const { assert, run } = Ember;
+const { assert, run, isNone, isEmpty } = Ember;
 
 class Controller {
   constructor(args = {}) {
@@ -16,6 +16,8 @@ class Controller {
 
 export default Ember.Route.extend({
   updateModel(model) {
+    // TODO: This should be like this.refresh(model); ???
+
     Ember.set(this.state, 'model', model);
   },
 

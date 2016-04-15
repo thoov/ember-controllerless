@@ -6,9 +6,8 @@ const Router = Ember.Router.extend({
 });
 
 Router.map(function() {
-  this.route('search');
-  this.route('users', function() {
-    this.route('signup');
+  this.route('search', function() {
+    this.route('details', { path: ':id' });
   });
 });
 
