@@ -1,63 +1,48 @@
 import Ember from 'ember';
-import buildRenderOptions from './build-render-options';
+import stateFor from 'ember-state-services/state-for';
 
-const { assert, run, isNone, isEmpty } = Ember;
+const { getOwner, get, computed } = Ember;
 
-class Controller {
-  constructor(args = {}) {
-    this.model = args.model;
-    this.target = args.target;
-  }
+/*
+  TODO:
 
-  send() {
-    this.target.send(...arguments);
-  }
-}
+  * Stop setup & reset controller events by overriding setup
+    https://github.com/emberjs/ember.js/blob/v2.9.0-beta.5/packages/ember-routing/lib/system/route.js#L1210-L1266
 
+*/
 export default Ember.Route.extend({
-  updateModel(model) {
-    // TODO: This should be like this.refresh(model); ???
+  /*
+    Setup method -> controllerFor
 
-    Ember.set(this.state, 'model', model);
-  },
+    We override the controllerFor method to return a
+    proxy controller which proxies to the route
+  */
+  state: stateFor('route-state', '__stateKey'),
 
   /*
-   * https://github.com/emberjs/ember.js/blob/7587a7d1f9fd94fd20debad0c7477d1d051b35e2/packages/ember-routing/lib/system/route.js#L1165-L1225
-   *
-   * Override the setup function and remove all controller logic.
-   * TODO: add back query params
-   *
-   * renderTemplate -> render -> buildRenderOptions
-   */
-  setup(model) {
-    this.state = new Controller({ model, target: this });
+    TODO: Look into adding this behavior to ember-state-services
+  */
+  __stateKey: computed('routeName', function() {
+    return Ember.Object.create({ routeName: get(this, 'routeName') });
+  }),
 
-    if (!this._environment || this._environment.options.shouldRender) {
-      this.renderTemplate();
-    }
-  },
+  controllerFor(controllerName /*, _skipAssert*/) {
+    const owner = getOwner(this);
+    const fullName = `controller:${controllerName}`;
 
-  render(_name, options) {
-    assert('The name in the given arguments is undefined', arguments.length > 0 ? !isNone(arguments[0]) : true);
-
-    var namePassed = typeof _name === 'string' && !!_name;
-    var isDefaultRender = arguments.length === 0 || isEmpty(arguments[0]);
-    var name;
-
-    if (typeof _name === 'object' && !options) {
-      name = this.routeName;
-      options = _name;
-    } else {
-      name = _name;
+    if (owner.lookup(fullName)) {
+      return owner.lookup(fullName);
     }
 
-    var renderOptions = buildRenderOptions(this, namePassed, isDefaultRender, name, options);
+    const proxyController = Ember.ObjectProxy.extend({
+      content: this, // We forward all requests to the route
+      actions: get(this, 'actions'), // TODO look into this (this is because it does target.actions and not target.get('actions'))
+      send() {
+        get(this, 'content').send(...arguments);
+      }
+    });
 
-    renderOptions.controller = this.state;
-
-    this.connections.push(renderOptions);
-    run.once(this.router, '_setOutlets');
-  },
-
-  _reset() {}
+    owner.register(fullName, proxyController);
+    return owner.lookup(fullName);
+  }
 });
